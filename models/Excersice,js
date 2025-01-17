@@ -1,0 +1,33 @@
+const { Model, DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+class Exercise extends Model {}
+
+Exercise.init(
+  {
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    progress: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0, // Percentage progress, 0-100
+    },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    sequelize,
+    modelName: 'Exercise',
+    tableName: 'exercises',
+    timestamps: false,
+  }
+);
+
+module.exports = Exercise;
