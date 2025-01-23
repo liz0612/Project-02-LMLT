@@ -1,41 +1,58 @@
+//Dependencies
+
+const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const exphbs = require('express-handlebars');
-const dotenv = require('dotenv');
-const sequelize = require('./config/database');
+const routes = require('./controllers');
+const helpers = require('./utils/helpers');
+const sequelize = require('./config/connection');
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
-const apiRoutes = require('./routes/apiRoutes');
 
-dotenv.config();
+// Initialize Express and Set Port
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+// Set up Handlebars.js engine with custom helpers
 
-// Handlebars setup
-const hbs = exphbs.create({ defaultLayout: 'main' });
+const hbs = exphbs.create({ helpers });
+
+// Session Config
+
+const sess = {
+  secret: 'Super secret secret',
+  cookie: {
+    maxAge: 300000,
+    httpOnly: true,
+    secure: false,
+    sameSite: 'strict',
+  },
+  resave: false,
+  saveUninitialized: true,
+  store: new SequelizeStore({
+    db: sequelize
+  })
+};
+app.use(session(sess));
+
+// Inform Express.js on which template engine to use
+
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 
-// Session setup
-const sessionStore = new SequelizeStore({ db: sequelize });
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    store: sessionStore,
-  })
-);
+// Middleware for Parsing Requests
 
-// Import and use routes
-app.use('/api', apiRoutes);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Sync database and start server
+// Set up routes
+
+app.use(routes);
+
+
+//
 sequelize.sync({ force: false }).then(() => {
-  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+  app.listen(PORT, () => console.log('Now listening'));
 });
